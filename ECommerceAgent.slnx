@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ECommerceAgent.Application/ECommerceAgent.Application.csproj" />
+    <Project Path="src/ECommerceAgent.ConsoleApp/ECommerceAgent.ConsoleApp.csproj" />
+    <Project Path="src/ECommerceAgent.Domain/ECommerceAgent.Domain.csproj" />
+    <Project Path="src/ECommerceAgent.Infrastructure/ECommerceAgent.Infrastructure.csproj" />
+  </Folder>
+</Solution>
