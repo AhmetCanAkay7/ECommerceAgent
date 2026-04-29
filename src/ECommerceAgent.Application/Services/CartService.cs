@@ -1,9 +1,24 @@
+using System.Text;
+using System.Text.Json;
 using ECommerceAgent.Application.Interfaces;
 using ECommerceAgent.Domain.Entities;
 using ECommerceAgent.Domain.Interfaces;
 
 namespace ECommerceAgent.Application.Services;
 
+/// <summary>
+/// Sepet iş mantığı servisi — İŞ KURALLARININ kalbi.
+/// 
+/// Agentic perspektiften kritik noktalar:
+/// 1. Her metot string döner — çünkü bu string doğrudan LLM'e gider.
+///    LLM bu mesajı okuyup kullanıcıya doğal dilde aktarır.
+/// 2. Hata mesajları açıklayıcı olmalı — LLM'in "neden başarısız?" sorusuna
+///    cevap verebilmesi için.
+/// 3. İş kuralları burada — Plugin'de değil. Plugin sadece "çağır ve sonucu dön" yapar.
+/// 
+/// IBM sunumundaki "parametre halüsinasyonu" konusu burada handle ediliyor:
+/// → Agent uydurma bir productId gönderirse → "Ürün bulunamadı" mesajı döner.
+/// </summary>
 public class CartService : ICartService
 {
     private readonly ICartRepository _cartRepository;
@@ -17,20 +32,76 @@ public class CartService : ICartService
 
     public string AddToCart(string productId, int quantity)
     {
-        // TODO: Pair programming ile implemente edilecek
-        // Stok kontrolü, iş kuralları burada olacak
-        throw new NotImplementedException();
+        // 1. Ürün var mı? (Parametre halüsinasyonu kontrolü)
+        var product = _productRepository.GetById(productId);
+        if (product == null)
+            return $"Hata: '{productId}' ID'li ürün bulunamadı. Lütfen önce ürün arayın.";
+
+        // 2. Geçerli miktar mı?
+        if (quantity <= 0)
+            return "Hata: Miktar 0'dan büyük olmalıdır.";
+
+        // 3. Stok kontrolü — agentic sistemlerde en sık karşılaşılan iş kuralı
+        var currentInCart = _cartRepository.GetItemQuantity(productId);
+        var availableStock = product.Stock - currentInCart;
+
+        if (availableStock <= 0)
+            return $"Hata: '{product.Name}' stokta kalmadı.";
+
+        // Stoktan fazla isteniyorsa → kısmi ekleme
+        var actualQuantity = Math.Min(quantity, availableStock);
+        _cartRepository.AddItem(productId, actualQuantity);
+
+        var message = new StringBuilder();
+        message.Append($"✅ '{product.Name}' x{actualQuantity} sepete eklendi.");
+
+        if (actualQuantity < quantity)
+            message.Append($" ⚠️ Stokta yalnızca {availableStock} adet vardı, {actualQuantity} adet eklendi.");
+
+        message.Append($" (Birim fiyat: {product.Price:C})");
+
+        return message.ToString();
     }
 
     public string RemoveFromCart(string productId)
     {
-        // TODO: Pair programming ile implemente edilecek
-        throw new NotImplementedException();
+        // Ürün bilgisini al (mesajda adını göstermek için)
+        var product = _productRepository.GetById(productId);
+        var productName = product?.Name ?? productId;
+
+        var removed = _cartRepository.RemoveItem(productId);
+        if (!removed)
+            return $"Hata: '{productName}' sepetinizde bulunamadı.";
+
+        return $"✅ '{productName}' sepetten çıkarıldı.";
     }
 
     public string GetCart()
     {
-        // TODO: Pair programming ile implemente edilecek
-        throw new NotImplementedException();
+        var items = _cartRepository.GetAllItems().ToList();
+
+        if (!items.Any())
+            return "Sepetiniz boş.";
+
+        // JSON formatında dön — LLM yapılandırılmış veriyi daha iyi okur
+        var cartSummary = new
+        {
+            Items = items.Select(i => new
+            {
+                i.ProductId,
+                i.ProductName,
+                i.Quantity,
+                UnitPrice = $"{i.UnitPrice:F2} TL",
+                TotalPrice = $"{i.TotalPrice:F2} TL"
+            }),
+            TotalAmount = $"{items.Sum(i => i.TotalPrice):F2} TL",
+            ItemCount = items.Count
+        };
+
+        return JsonSerializer.Serialize(cartSummary, new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        });
     }
 }
