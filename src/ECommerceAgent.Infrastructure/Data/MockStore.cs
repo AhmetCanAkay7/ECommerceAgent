@@ -2,20 +2,8 @@ using ECommerceAgent.Domain.Entities;
 
 namespace ECommerceAgent.Infrastructure.Data;
 
-/// <summary>
-/// In-memory veri deposu. Gerçek projede bu katman veritabanı olur,
-/// ama agentic yapıyı öğrenirken basit tutuyoruz.
-/// 
-/// Neden static? → Uygulama boyunca tek bir "mağaza" ve tek bir "sepet" olsun.
-/// Agent her tool çağrısında aynı veriye erişsin.
-/// </summary>
 public static class MockStore
 {
-    /// <summary>
-    /// Ürün kataloğu — bir marketin reyonlarını düşün.
-    /// 5 kategori, toplamda 15 ürün.
-    /// Her ürünün stok bilgisi var — agent stok kontrolü yapacak.
-    /// </summary>
     public static List<Product> Products { get; } = new()
     {
         // 🥛 Süt Ürünleri
@@ -44,12 +32,102 @@ public static class MockStore
         new Product { Id = "atis-003",   Name = "Kuruyemiş 250g",        Category = "Atıştırmalık",  Price = 74.90m,  Stock = 10 },
     };
 
-    /// <summary>
-    /// Sepet state'i — Dictionary<productId, quantity>
-    /// 
-    /// Neden Dictionary? → productId ile hızlı erişim.
-    /// Agent "2 süt ekle" dediğinde: Cart["sut-001"] = 2
-    /// Agent "1 süt daha ekle" dediğinde: Cart["sut-001"] = 3 (mevcut üzerine ekle)
-    /// </summary>
+    public static List<Customer> Customers { get; } = new()
+    {
+        new Customer
+        {
+            Id = "cust-001",
+            FullName = "Ahmet Yilmaz",
+            Email = "ahmet.yilmaz@example.com",
+            PhoneNumber = "+90 555 100 10 01",
+            LoyaltyLevel = "Gold"
+        },
+        new Customer
+        {
+            Id = "cust-002",
+            FullName = "Ayse Demir",
+            Email = "ayse.demir@example.com",
+            PhoneNumber = "+90 555 100 10 02",
+            LoyaltyLevel = "Silver"
+        },
+        new Customer
+        {
+            Id = "cust-003",
+            FullName = "Mehmet Kaya",
+            Email = "mehmet.kaya@example.com",
+            PhoneNumber = "+90 555 100 10 03",
+            LoyaltyLevel = "Standard"
+        }
+    };
+
+    public static List<Order> Orders { get; } = new()
+    {
+        new Order
+        {
+            Id = "ord-1001",
+            CustomerId = "cust-001",
+            Status = OrderStatus.Delivered,
+            CreatedAt = new DateTime(2026, 4, 25, 11, 30, 0, DateTimeKind.Utc),
+            Items = new List<OrderItem>
+            {
+                CreateOrderItem("sut-001", 2),
+                CreateOrderItem("gida-001", 1),
+                CreateOrderItem("icecek-001", 1)
+            }
+        },
+        new Order
+        {
+            Id = "ord-1002",
+            CustomerId = "cust-001",
+            Status = OrderStatus.Preparing,
+            CreatedAt = new DateTime(2026, 5, 1, 18, 15, 0, DateTimeKind.Utc),
+            Items = new List<OrderItem>
+            {
+                CreateOrderItem("sut-002", 1),
+                CreateOrderItem("gida-002", 3),
+                CreateOrderItem("atis-003", 1)
+            }
+        },
+        new Order
+        {
+            Id = "ord-1003",
+            CustomerId = "cust-002",
+            Status = OrderStatus.OutForDelivery,
+            CreatedAt = new DateTime(2026, 5, 2, 9, 45, 0, DateTimeKind.Utc),
+            Items = new List<OrderItem>
+            {
+                CreateOrderItem("temiz-001", 1),
+                CreateOrderItem("temiz-003", 2)
+            }
+        },
+        new Order
+        {
+            Id = "ord-1004",
+            CustomerId = "cust-003",
+            Status = OrderStatus.Cancelled,
+            CreatedAt = new DateTime(2026, 4, 28, 16, 0, 0, DateTimeKind.Utc),
+            CancelledAt = new DateTime(2026, 4, 28, 16, 20, 0, DateTimeKind.Utc),
+            CancellationReason = "Musteri talebi",
+            Items = new List<OrderItem>
+            {
+                CreateOrderItem("icecek-003", 2),
+                CreateOrderItem("atis-001", 4)
+            }
+        }
+    };
+
     public static Dictionary<string, int> Cart { get; } = new();
+
+    private static OrderItem CreateOrderItem(string productId, int quantity)
+    {
+        var product = Products.First(p => p.Id == productId);
+
+        return new OrderItem
+        {
+            ProductId = product.Id,
+            ProductName = product.Name,
+            UnitPrice = product.Price,
+            Quantity = quantity
+        };
+    }
 }

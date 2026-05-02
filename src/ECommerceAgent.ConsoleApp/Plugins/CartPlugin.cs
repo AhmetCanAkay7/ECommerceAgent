@@ -4,17 +4,6 @@ using ECommerceAgent.Application.Interfaces;
 
 namespace ECommerceAgent.ConsoleApp.Plugins;
 
-/// <summary>
-/// Sepet yönetimi plugin'i — LLM'in "sepete ekleme/çıkarma/görüntüleme" yetenekleri.
-/// 
-/// Bu plugin'de 3 KernelFunction var. LLM her mesajda hangisini çağıracağına
-/// (veya hiçbirini çağırmayacağına) KENDI BAŞINA karar verir.
-/// 
-/// Agentic öğrenme noktaları:
-/// - AddToCart vs RemoveFromCart → LLM "ekle" mi "çıkar" mı dediğini anlamalı
-/// - GetCart → Parametresiz tool — bazen bilgi almak için tool çağırmak yeterli
-/// - quantity default 1 → LLM miktar belirtmezse varsayılan kullanılır
-/// </summary>
 [Description("Sepet yönetimi işlemlerini gerçekleştiren plugin")]
 public class CartPlugin
 {
