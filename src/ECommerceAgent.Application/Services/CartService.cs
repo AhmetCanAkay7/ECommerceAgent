@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.Json;
 using ECommerceAgent.Application.Interfaces;
-using ECommerceAgent.Domain.Entities;
 using ECommerceAgent.Domain.Interfaces;
 
 namespace ECommerceAgent.Application.Services;

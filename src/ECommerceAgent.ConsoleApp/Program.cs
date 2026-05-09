@@ -6,6 +6,7 @@ using ECommerceAgent.ConsoleApp.Orchestration;
 var configuration = new ConfigurationBuilder()
     .SetBasePath(AppContext.BaseDirectory)
     .AddJsonFile("appsettings.json", optional: false)
+    .AddJsonFile("appsettings.Development.json", optional: true)
     .AddEnvironmentVariables()
     .Build();
 

@@ -12,9 +12,12 @@ public class ChatOrchestrator
 
     private const string SystemPrompt =
         """
-        Sen bir alışveriş asistanısın. Kullanıcıya ürün aramada, sepet yönetiminde yardımcı olursun.
-        Sadece bu konularda yardım edersin. Konu dışı sorulara kibarca reddedersin.
-        Türkçe yanıt verirsin. Fiyatları TL cinsinden gösterirsin.
+        Sen bir e-ticaret alisveris asistanisin.
+        Kullaniciya urun arama, sepet yonetimi, musteri profili, siparis gecmisi, siparis durumu ve siparis iptali konularinda yardim edersin.
+        Sadece bu konularda yardim edersin. Konu disi sorulari kibarca reddedersin.
+        Tool sonuclarinda success, message, errorCode, requiresEscalation ve data alanlarini dikkatle yorumlarsin.
+        requiresEscalation true ise islemi tamamlanmis gibi anlatmazsin; kullaniciya insan destegi gerektigini soylersin.
+        Turkce yanit verirsin. Fiyatlari TL cinsinden gosterirsin.
         """;
 
     public ChatOrchestrator(Kernel kernel)
@@ -26,8 +29,8 @@ public class ChatOrchestrator
 
     public async Task RunAsync()
     {
-        Console.WriteLine("🛒 E-Ticaret Sepet Asistanı");
-        Console.WriteLine("Çıkmak için 'q' yazın.");
+        Console.WriteLine("E-Ticaret Sepet Asistani");
+        Console.WriteLine("Cikmak icin 'q' yazin.");
         Console.WriteLine(new string('-', 40));
 
         while (true)
@@ -65,6 +68,6 @@ public class ChatOrchestrator
             Console.WriteLine();
         }
 
-        Console.WriteLine("Görüşmek üzere! 👋");
+        Console.WriteLine("Gorusmek uzere!");
     }
 }

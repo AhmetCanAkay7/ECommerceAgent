@@ -1,4 +1,5 @@
 # Project-specific
+appsettings.Development.json
 plan-dosyalarım/
 
 ## Ignore Visual Studio temporary files, build results, and

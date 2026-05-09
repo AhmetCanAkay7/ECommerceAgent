@@ -18,6 +18,15 @@ public sealed class Result<T>
         };
     }
 
+    public static Result<T> Ok(string message)
+    {
+        return new Result<T>
+        {
+            Success = true,
+            Message=message
+        };
+    }
+
     public static Result<T> Fail(
         string message,
         string? errorCode = null,

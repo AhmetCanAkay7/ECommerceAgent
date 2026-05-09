@@ -17,12 +17,21 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var apiKey = configuration["OpenAI:ApiKey"]
-            ?? throw new InvalidOperationException(
-                "OpenAI:ApiKey yapılandırılmamış! appsettings.json'a veya " +
-                "OPENAI__APIKEY environment variable'ına ekleyin.");
+        var apiKey = configuration["OpenAI:ApiKey"];
+        if (string.IsNullOrWhiteSpace(apiKey) ||
+            apiKey.Equals("YOUR_API_KEY", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                "OpenAI:ApiKey configured degil. OpenAI__ApiKey environment variable kullanin " +
+                "veya git'e girmeyen appsettings.Local.json dosyasina ekleyin.");
+        }
 
-        var modelId = configuration["OpenAI:ModelId"] ?? "gpt-4o";
+        var modelId = configuration["OpenAI:ModelId"];
+        if (string.IsNullOrWhiteSpace(modelId) ||
+            modelId.Equals("YOUR_MODEL_ID", StringComparison.OrdinalIgnoreCase))
+        {
+            modelId = "gpt-4o";
+        }
 
         services.AddSingleton<IProductRepository, InMemoryProductRepository>();
         services.AddSingleton<ICartRepository, InMemoryCartRepository>();
@@ -34,15 +43,13 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICustomerService, CustomerService>();
         services.AddSingleton<IOrderService, OrderService>();
 
-        // AddOpenAIChatCompletion() → LLM bağlantısını Kernel'a ekler.
         services.AddKernel();
         services.AddOpenAIChatCompletion(modelId, apiKey);
 
-        // KernelPluginFactory.CreateFromObject → Plugin sınıfını Semantic Kernel'ın
-        // anlayacağı KernelPlugin nesnesine dönüştürür.
-        // [KernelFunction] ile işaretli metotları tarar ve tool olarak kaydeder.
         services.AddSingleton<ProductPlugin>();
         services.AddSingleton<CartPlugin>();
+        services.AddSingleton<CustomerPlugin>();
+        services.AddSingleton<OrderPlugin>();
 
         services.AddSingleton<KernelPlugin>(sp =>
             KernelPluginFactory.CreateFromObject(
@@ -52,11 +59,15 @@ public static class ServiceCollectionExtensions
             KernelPluginFactory.CreateFromObject(
                 sp.GetRequiredService<CartPlugin>(), "CartPlugin"));
 
-        // Observability — Agent'ı izleme (Filter)
+        services.AddSingleton<KernelPlugin>(sp =>
+            KernelPluginFactory.CreateFromObject(
+                sp.GetRequiredService<CustomerPlugin>(), "CustomerPlugin"));
+
+        services.AddSingleton<KernelPlugin>(sp =>
+            KernelPluginFactory.CreateFromObject(
+                sp.GetRequiredService<OrderPlugin>(), "OrderPlugin"));
 
         services.AddSingleton<IAutoFunctionInvocationFilter, ToolLoggingFilter>();
-
-        // ChatOrchestrator(Kernel) → Kernel DI'dan inject edilir.
         services.AddTransient<ChatOrchestrator>();
 
         return services;

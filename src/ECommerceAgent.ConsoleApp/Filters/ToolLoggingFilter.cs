@@ -18,7 +18,7 @@ public class ToolLoggingFilter : IAutoFunctionInvocationFilter
             : "parametresiz";
 
         Console.ForegroundColor = ConsoleColor.DarkYellow;
-        Console.WriteLine($"\n  🔧 [{pluginName}] {functionName} çağrılıyor...");
+        Console.WriteLine($"\n [{pluginName}] {functionName} çağrılıyor...");
         Console.WriteLine($"     Parametreler: {paramStr}");
         Console.ResetColor();
 
