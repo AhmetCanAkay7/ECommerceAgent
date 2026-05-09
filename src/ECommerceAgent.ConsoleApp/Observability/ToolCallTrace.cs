@@ -4,6 +4,7 @@ public sealed class ToolCallTrace
 {
     public string PluginName { get; init; } = string.Empty;
     public string FunctionName { get; init; } = string.Empty;
+    public string RiskLevel { get; init; } = string.Empty;
     public Dictionary<string, string?> Arguments { get; init; } = new();
     public long DurationMs { get; init; }
     public bool Success { get; init; }

@@ -9,6 +9,7 @@ using ECommerceAgent.ConsoleApp.Plugins;
 using ECommerceAgent.ConsoleApp.Filters;
 using ECommerceAgent.ConsoleApp.Orchestration;
 using ECommerceAgent.ConsoleApp.Observability;
+using ECommerceAgent.ConsoleApp.Guardrails;
 
 namespace ECommerceAgent.ConsoleApp.Configuration;
 
@@ -49,6 +50,9 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<AgentTraceContext>();
         services.AddSingleton<IAgentTraceStore, JsonFileTraceStore>();
+        services.AddSingleton<InputGuardrail>();
+        services.AddSingleton<OutputGuardrail>();
+        services.AddSingleton<ToolRiskPolicy>();
 
         services.AddSingleton<ProductPlugin>();
         services.AddSingleton<CartPlugin>();

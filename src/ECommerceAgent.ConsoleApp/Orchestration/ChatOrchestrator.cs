@@ -2,6 +2,7 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using System.Diagnostics;
+using ECommerceAgent.ConsoleApp.Guardrails;
 using ECommerceAgent.ConsoleApp.Observability;
 
 namespace ECommerceAgent.ConsoleApp.Orchestration;
@@ -13,6 +14,8 @@ public class ChatOrchestrator
     private readonly ChatHistory _chatHistory;
     private readonly AgentTraceContext _traceContext;
     private readonly IAgentTraceStore _traceStore;
+    private readonly InputGuardrail _inputGuardrail;
+    private readonly OutputGuardrail _outputGuardrail;
     private readonly string _conversationId = Guid.NewGuid().ToString("N");
 
     private const string SystemPrompt =
@@ -21,7 +24,7 @@ public class ChatOrchestrator
         Kullaniciya urun arama, sepet yonetimi, musteri profili, siparis gecmisi, siparis durumu ve siparis iptali konularinda yardim edersin.
         Sadece bu konularda yardim edersin. Konu disi sorulari kibarca reddedersin.
         Tool sonuclarinda success, message, errorCode, requiresEscalation ve data alanlarini dikkatle yorumlarsin.
-        requiresEscalation true ise islemi tamamlanmis gibi anlatmazsin; kullaniciya insan destegi gerektigini soylersin.
+        requiresEscalation true ise islemi tamamlanmis veya temsilciye aktarilmis gibi anlatmazsin; sadece insan destegi gerektigini soylersin.
         Dinamik state iceren konularda chat history'ye guvenmezsin; cevap vermeden once ilgili read tool'u cagirirsin.
         Sepet sorularinda her zaman GetCart tool'unu kullanirsin.
         Urun veya stok sorularinda SearchProducts tool'unu kullanirsin.
@@ -34,11 +37,15 @@ public class ChatOrchestrator
     public ChatOrchestrator(
         Kernel kernel,
         AgentTraceContext traceContext,
-        IAgentTraceStore traceStore)
+        IAgentTraceStore traceStore,
+        InputGuardrail inputGuardrail,
+        OutputGuardrail outputGuardrail)
     {
         _kernel = kernel;
         _traceContext = traceContext;
         _traceStore = traceStore;
+        _inputGuardrail = inputGuardrail;
+        _outputGuardrail = outputGuardrail;
         _chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
         _chatHistory = new ChatHistory(SystemPrompt);
     }
@@ -65,6 +72,33 @@ public class ChatOrchestrator
 
             var turnStopwatch = Stopwatch.StartNew();
             var trace = _traceContext.BeginTurn(_conversationId, input);
+
+            var inputGuardrailResult = _inputGuardrail.Validate(input);
+            if (!inputGuardrailResult.Allowed)
+            {
+                _traceContext.MarkInputBlocked(
+                    inputGuardrailResult.ReasonCode ?? "INPUT_BLOCKED",
+                    inputGuardrailResult.Message);
+
+                turnStopwatch.Stop();
+                _traceContext.CompleteTurn(inputGuardrailResult.Message, turnStopwatch.ElapsedMilliseconds);
+                await _traceStore.SaveAsync(trace);
+
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"[Guardrail] INPUT BLOCKED | Reason: {inputGuardrailResult.ReasonCode}");
+                Console.ResetColor();
+                PrintTraceSummary(trace);
+
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.Write("Asistan > ");
+                Console.ResetColor();
+                Console.WriteLine(inputGuardrailResult.Message);
+                Console.WriteLine();
+
+                _traceContext.Clear();
+                continue;
+            }
+
             _chatHistory.AddUserMessage(input);
 
             var settings = new OpenAIPromptExecutionSettings
@@ -84,6 +118,20 @@ public class ChatOrchestrator
 
                 turnStopwatch.Stop();
                 _traceContext.CompleteTurn(assistantOutput, turnStopwatch.ElapsedMilliseconds);
+
+                var outputGuardrailResult = _outputGuardrail.Validate(assistantOutput, trace);
+                if (!outputGuardrailResult.Allowed)
+                {
+                    _traceContext.MarkOutputWarning(
+                        outputGuardrailResult.ReasonCode ?? "OUTPUT_WARNING",
+                        outputGuardrailResult.Message);
+
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine($"[Guardrail] OUTPUT WARNING | Reason: {outputGuardrailResult.ReasonCode}");
+                    Console.WriteLine($"[Guardrail] {outputGuardrailResult.Message}");
+                    Console.ResetColor();
+                }
+
                 await _traceStore.SaveAsync(trace);
                 PrintTraceSummary(trace);
 

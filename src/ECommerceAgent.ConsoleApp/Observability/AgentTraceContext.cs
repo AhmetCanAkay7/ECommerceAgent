@@ -31,6 +31,34 @@ public sealed class AgentTraceContext
         trace.Metrics.TotalToolDurationMs = trace.ToolCalls.Sum(call => call.DurationMs);
         trace.Metrics.ErrorCount = trace.ToolCalls.Count(call => !call.Success || call.ExceptionType != null);
         trace.Metrics.EscalationCount = trace.ToolCalls.Count(call => call.RequiresEscalation);
+        trace.Metrics.ReadOnlyToolCallCount = trace.ToolCalls.Count(call => call.RiskLevel == "ReadOnly");
+        trace.Metrics.WriteToolCallCount = trace.ToolCalls.Count(call =>
+            call.RiskLevel == "LowRiskWrite" ||
+            call.RiskLevel == "MediumRiskWrite");
+    }
+
+    public void MarkInputBlocked(string reasonCode, string message)
+    {
+        var trace = Current;
+        if (trace == null)
+            return;
+
+        trace.BlockedByInputGuardrail = true;
+        trace.InputGuardrailReasonCode = reasonCode;
+        trace.InputGuardrailMessage = message;
+        trace.Metrics.GuardrailBlockCount++;
+    }
+
+    public void MarkOutputWarning(string reasonCode, string message)
+    {
+        var trace = Current;
+        if (trace == null)
+            return;
+
+        trace.OutputGuardrailWarning = true;
+        trace.OutputGuardrailReasonCode = reasonCode;
+        trace.OutputGuardrailMessage = message;
+        trace.Metrics.GuardrailWarningCount++;
     }
 
     public void CompleteTurn(string assistantOutput, long durationMs)

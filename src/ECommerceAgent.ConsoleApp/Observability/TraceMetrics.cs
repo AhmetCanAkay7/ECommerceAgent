@@ -6,6 +6,10 @@ public sealed class TraceMetrics
     public int ToolCallCount { get; set; }
     public int ErrorCount { get; set; }
     public int EscalationCount { get; set; }
+    public int ReadOnlyToolCallCount { get; set; }
+    public int WriteToolCallCount { get; set; }
+    public int GuardrailBlockCount { get; set; }
+    public int GuardrailWarningCount { get; set; }
     public long TotalToolDurationMs { get; set; }
     public int? PromptTokens { get; set; }
     public int? CompletionTokens { get; set; }

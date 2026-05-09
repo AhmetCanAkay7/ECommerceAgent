@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.SemanticKernel;
+using ECommerceAgent.ConsoleApp.Guardrails;
 using ECommerceAgent.ConsoleApp.Observability;
 
 namespace ECommerceAgent.ConsoleApp.Filters;
@@ -8,10 +9,14 @@ namespace ECommerceAgent.ConsoleApp.Filters;
 public sealed class ObservabilityFilter : IAutoFunctionInvocationFilter
 {
     private readonly AgentTraceContext _traceContext;
+    private readonly ToolRiskPolicy _toolRiskPolicy;
 
-    public ObservabilityFilter(AgentTraceContext traceContext)
+    public ObservabilityFilter(
+        AgentTraceContext traceContext,
+        ToolRiskPolicy toolRiskPolicy)
     {
         _traceContext = traceContext;
+        _toolRiskPolicy = toolRiskPolicy;
     }
 
     public async Task OnAutoFunctionInvocationAsync(
@@ -21,9 +26,10 @@ public sealed class ObservabilityFilter : IAutoFunctionInvocationFilter
         var functionName = context.Function.Name;
         var pluginName = context.Function.PluginName ?? "UnknownPlugin";
         var arguments = ToArgumentDictionary(context.Arguments);
+        var riskLevel = _toolRiskPolicy.Classify(functionName);
 
         Console.ForegroundColor = ConsoleColor.DarkYellow;
-        Console.WriteLine($"[Tool] START {pluginName}.{functionName}");
+        Console.WriteLine($"[Tool] START {pluginName}.{functionName} | Risk: {riskLevel}");
         Console.WriteLine($"[Tool] Args  {FormatArguments(arguments)}");
         Console.ResetColor();
 
@@ -51,6 +57,7 @@ public sealed class ObservabilityFilter : IAutoFunctionInvocationFilter
             {
                 PluginName = pluginName,
                 FunctionName = functionName,
+                RiskLevel = riskLevel.ToString(),
                 Arguments = arguments,
                 DurationMs = stopwatch.ElapsedMilliseconds,
                 Success = exception == null && (parsedResult?.Success ?? true),
@@ -65,7 +72,7 @@ public sealed class ObservabilityFilter : IAutoFunctionInvocationFilter
             _traceContext.AddToolCall(trace);
 
             Console.ForegroundColor = trace.Success ? ConsoleColor.DarkGray : ConsoleColor.Red;
-            Console.WriteLine($"[Tool] END   {pluginName}.{functionName} | Success: {trace.Success} | Duration: {trace.DurationMs}ms");
+            Console.WriteLine($"[Tool] END   {pluginName}.{functionName} | Risk: {riskLevel} | Success: {trace.Success} | Duration: {trace.DurationMs}ms");
             if (!string.IsNullOrWhiteSpace(trace.Message))
                 Console.WriteLine($"[Result] Message: {trace.Message}");
             if (!string.IsNullOrWhiteSpace(trace.ErrorCode))
