@@ -8,6 +8,7 @@ using ECommerceAgent.Infrastructure.Repositories;
 using ECommerceAgent.ConsoleApp.Plugins;
 using ECommerceAgent.ConsoleApp.Filters;
 using ECommerceAgent.ConsoleApp.Orchestration;
+using ECommerceAgent.ConsoleApp.Observability;
 
 namespace ECommerceAgent.ConsoleApp.Configuration;
 
@@ -46,6 +47,9 @@ public static class ServiceCollectionExtensions
         services.AddKernel();
         services.AddOpenAIChatCompletion(modelId, apiKey);
 
+        services.AddSingleton<AgentTraceContext>();
+        services.AddSingleton<IAgentTraceStore, JsonFileTraceStore>();
+
         services.AddSingleton<ProductPlugin>();
         services.AddSingleton<CartPlugin>();
         services.AddSingleton<CustomerPlugin>();
@@ -67,7 +71,7 @@ public static class ServiceCollectionExtensions
             KernelPluginFactory.CreateFromObject(
                 sp.GetRequiredService<OrderPlugin>(), "OrderPlugin"));
 
-        services.AddSingleton<IAutoFunctionInvocationFilter, ToolLoggingFilter>();
+        services.AddSingleton<IAutoFunctionInvocationFilter, ObservabilityFilter>();
         services.AddTransient<ChatOrchestrator>();
 
         return services;

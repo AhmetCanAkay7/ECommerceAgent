@@ -1,4 +1,5 @@
 # Project-specific
+src/ECommerceAgent.ConsoleApp/bin/**/traces/
 appsettings.Development.json
 plan-dosyalarım/
 

@@ -6,119 +6,157 @@ public static class MockStore
 {
     public static List<Product> Products { get; } = new()
     {
-        // 🥛 Süt Ürünleri
-        new Product { Id = "sut-001",    Name = "Günlük Süt 1L",         Category = "Süt Ürünleri",  Price = 45.90m,  Stock = 20 },
-        new Product { Id = "sut-002",    Name = "Kaşar Peyniri 500g",    Category = "Süt Ürünleri",  Price = 129.90m, Stock = 15 },
-        new Product { Id = "sut-003",    Name = "Beyaz Peynir 400g",     Category = "Süt Ürünleri",  Price = 89.90m,  Stock = 10 },
+        // Cart and product-search scenarios
+        Product("sut-001", "Günlük Süt 1L", "Süt Ürünleri", 45.90m, 20),
+        Product("sut-002", "Laktozsuz Süt 1L", "Süt Ürünleri", 52.90m, 8),
+        Product("gida-001", "Tam Buğday Ekmek", "Temel Gıda", 22.50m, 30),
+        Product("gida-002", "Makarna 500g", "Temel Gıda", 34.90m, 25),
 
-        // 🍞 Temel Gıda
-        new Product { Id = "gida-001",   Name = "Tam Buğday Ekmek",      Category = "Temel Gıda",    Price = 22.50m,  Stock = 30 },
-        new Product { Id = "gida-002",   Name = "Makarna 500g",          Category = "Temel Gıda",    Price = 34.90m,  Stock = 25 },
-        new Product { Id = "gida-003",   Name = "Pirinç 1kg",           Category = "Temel Gıda",    Price = 64.90m,  Stock = 18 },
+        // Edge-case scenarios
+        Product("icecek-001", "Portakal Suyu 1L", "İçecek", 44.90m, 3),
+        Product("atis-001", "Bisküvi 200g", "Atıştırmalık", 24.90m, 0),
 
-        // 🧹 Temizlik
-        new Product { Id = "temiz-001",  Name = "Bulaşık Deterjanı 1L",  Category = "Temizlik",      Price = 79.90m,  Stock = 12 },
-        new Product { Id = "temiz-002",  Name = "Çamaşır Deterjanı 2kg", Category = "Temizlik",      Price = 149.90m, Stock = 8 },
-        new Product { Id = "temiz-003",  Name = "Yüzey Temizleyici 750ml",Category = "Temizlik",     Price = 59.90m,  Stock = 15 },
-
-        // 🥤 İçecek
-        new Product { Id = "icecek-001", Name = "Ayran 1L",              Category = "İçecek",        Price = 29.90m,  Stock = 25 },
-        new Product { Id = "icecek-002", Name = "Maden Suyu 6'lı Paket", Category = "İçecek",        Price = 54.90m,  Stock = 20 },
-        new Product { Id = "icecek-003", Name = "Portakal Suyu 1L",      Category = "İçecek",        Price = 44.90m,  Stock = 3 },  // ⚠️ Düşük stok — test için
-
-        // 🍫 Atıştırmalık
-        new Product { Id = "atis-001",   Name = "Çikolata 80g",          Category = "Atıştırmalık",  Price = 39.90m,  Stock = 30 },
-        new Product { Id = "atis-002",   Name = "Bisküvi 200g",          Category = "Atıştırmalık",  Price = 24.90m,  Stock = 0 },  // ⚠️ Stokta yok — test için!
-        new Product { Id = "atis-003",   Name = "Kuruyemiş 250g",        Category = "Atıştırmalık",  Price = 74.90m,  Stock = 10 },
+        // Order-history variety
+        Product("temiz-001", "Bulaşık Deterjanı 1L", "Temizlik", 79.90m, 12),
+        Product("temiz-002", "Yüzey Temizleyici 750ml", "Temizlik", 59.90m, 15)
     };
 
     public static List<Customer> Customers { get; } = new()
     {
-        new Customer
-        {
-            Id = "cust-001",
-            FullName = "Ahmet Yilmaz",
-            Email = "ahmet.yilmaz@example.com",
-            PhoneNumber = "+90 555 100 10 01",
-            LoyaltyLevel = "Gold"
-        },
-        new Customer
-        {
-            Id = "cust-002",
-            FullName = "Ayse Demir",
-            Email = "ayse.demir@example.com",
-            PhoneNumber = "+90 555 100 10 02",
-            LoyaltyLevel = "Silver"
-        },
-        new Customer
-        {
-            Id = "cust-003",
-            FullName = "Mehmet Kaya",
-            Email = "mehmet.kaya@example.com",
-            PhoneNumber = "+90 555 100 10 03",
-            LoyaltyLevel = "Standard"
-        }
+        Customer(
+            id: "cust-001",
+            fullName: "Ahmet Yilmaz",
+            email: "ahmet.yilmaz@example.com",
+            phoneNumber: "+90 555 100 10 01",
+            loyaltyLevel: "Gold"),
+
+        Customer(
+            id: "cust-002",
+            fullName: "Ayse Demir",
+            email: "ayse.demir@example.com",
+            phoneNumber: "+90 555 100 10 02",
+            loyaltyLevel: "Silver"),
+
+        Customer(
+            id: "cust-003",
+            fullName: "Mehmet Kaya",
+            email: "mehmet.kaya@example.com",
+            phoneNumber: "+90 555 100 10 03",
+            loyaltyLevel: "Standard")
     };
 
     public static List<Order> Orders { get; } = new()
     {
-        new Order
-        {
-            Id = "ord-1001",
-            CustomerId = "cust-001",
-            Status = OrderStatus.Delivered,
-            CreatedAt = new DateTime(2026, 4, 25, 11, 30, 0, DateTimeKind.Utc),
-            Items = new List<OrderItem>
-            {
-                CreateOrderItem("sut-001", 2),
-                CreateOrderItem("gida-001", 1),
-                CreateOrderItem("icecek-001", 1)
-            }
-        },
-        new Order
-        {
-            Id = "ord-1002",
-            CustomerId = "cust-001",
-            Status = OrderStatus.Preparing,
-            CreatedAt = new DateTime(2026, 5, 1, 18, 15, 0, DateTimeKind.Utc),
-            Items = new List<OrderItem>
-            {
-                CreateOrderItem("sut-002", 1),
-                CreateOrderItem("gida-002", 3),
-                CreateOrderItem("atis-003", 1)
-            }
-        },
-        new Order
-        {
-            Id = "ord-1003",
-            CustomerId = "cust-002",
-            Status = OrderStatus.OutForDelivery,
-            CreatedAt = new DateTime(2026, 5, 2, 9, 45, 0, DateTimeKind.Utc),
-            Items = new List<OrderItem>
-            {
-                CreateOrderItem("temiz-001", 1),
-                CreateOrderItem("temiz-003", 2)
-            }
-        },
-        new Order
-        {
-            Id = "ord-1004",
-            CustomerId = "cust-003",
-            Status = OrderStatus.Cancelled,
-            CreatedAt = new DateTime(2026, 4, 28, 16, 0, 0, DateTimeKind.Utc),
-            CancelledAt = new DateTime(2026, 4, 28, 16, 20, 0, DateTimeKind.Utc),
-            CancellationReason = "Musteri talebi",
-            Items = new List<OrderItem>
-            {
-                CreateOrderItem("icecek-003", 2),
-                CreateOrderItem("atis-001", 4)
-            }
-        }
+        // Delivered order: should not be auto-cancellable.
+        Order(
+            id: "ord-1001",
+            customerId: "cust-001",
+            status: OrderStatus.Delivered,
+            createdAtUtc: new DateTime(2026, 5, 1, 10, 30, 0, DateTimeKind.Utc),
+            items:
+            [
+                OrderItem("sut-001", 2),
+                OrderItem("gida-001", 1)
+            ]),
+
+        // Preparing order: safe cancellation path for Section 2/3 tests.
+        Order(
+            id: "ord-1002",
+            customerId: "cust-001",
+            status: OrderStatus.Preparing,
+            createdAtUtc: new DateTime(2026, 5, 8, 18, 15, 0, DateTimeKind.Utc),
+            items:
+            [
+                OrderItem("sut-002", 1),
+                OrderItem("gida-002", 3),
+                OrderItem("icecek-001", 1)
+            ]),
+
+        // Out-for-delivery order: should require escalation.
+        Order(
+            id: "ord-1003",
+            customerId: "cust-002",
+            status: OrderStatus.OutForDelivery,
+            createdAtUtc: new DateTime(2026, 5, 9, 9, 45, 0, DateTimeKind.Utc),
+            items:
+            [
+                OrderItem("temiz-001", 1),
+                OrderItem("temiz-002", 2)
+            ]),
+
+        // Already cancelled order: idempotency and error-code test.
+        Order(
+            id: "ord-1004",
+            customerId: "cust-003",
+            status: OrderStatus.Cancelled,
+            createdAtUtc: new DateTime(2026, 5, 4, 16, 0, 0, DateTimeKind.Utc),
+            items:
+            [
+                OrderItem("atis-001", 4)
+            ],
+            cancelledAtUtc: new DateTime(2026, 5, 4, 16, 20, 0, DateTimeKind.Utc),
+            cancellationReason: "Musteri talebi")
     };
 
+    // The active console session cart. It is intentionally not customer-specific.
     public static Dictionary<string, int> Cart { get; } = new();
 
-    private static OrderItem CreateOrderItem(string productId, int quantity)
+    private static Product Product(
+        string id,
+        string name,
+        string category,
+        decimal price,
+        int stock)
+    {
+        return new Product
+        {
+            Id = id,
+            Name = name,
+            Category = category,
+            Price = price,
+            Stock = stock
+        };
+    }
+
+    private static Customer Customer(
+        string id,
+        string fullName,
+        string email,
+        string phoneNumber,
+        string loyaltyLevel)
+    {
+        return new Customer
+        {
+            Id = id,
+            FullName = fullName,
+            Email = email,
+            PhoneNumber = phoneNumber,
+            LoyaltyLevel = loyaltyLevel
+        };
+    }
+
+    private static Order Order(
+        string id,
+        string customerId,
+        OrderStatus status,
+        DateTime createdAtUtc,
+        IEnumerable<OrderItem> items,
+        DateTime? cancelledAtUtc = null,
+        string? cancellationReason = null)
+    {
+        return new Order
+        {
+            Id = id,
+            CustomerId = customerId,
+            Status = status,
+            CreatedAt = createdAtUtc,
+            Items = items.ToList(),
+            CancelledAt = cancelledAtUtc,
+            CancellationReason = cancellationReason
+        };
+    }
+
+    private static OrderItem OrderItem(string productId, int quantity)
     {
         var product = Products.First(p => p.Id == productId);
 
