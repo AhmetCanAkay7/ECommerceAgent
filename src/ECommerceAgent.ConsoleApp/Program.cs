@@ -1,7 +1,14 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ECommerceAgent.ConsoleApp.Configuration;
+using ECommerceAgent.ConsoleApp.Evaluation;
 using ECommerceAgent.ConsoleApp.Orchestration;
+
+if (args.Any(arg => arg.Equals("--analyze-traces", StringComparison.OrdinalIgnoreCase)))
+{
+    TraceEvaluationRunner.Run(AppContext.BaseDirectory);
+    return;
+}
 
 var configuration = new ConfigurationBuilder()
     .SetBasePath(AppContext.BaseDirectory)
@@ -13,15 +20,7 @@ var configuration = new ConfigurationBuilder()
 var services = new ServiceCollection();
 services.AddECommerceAgent(configuration);
 
-
 var serviceProvider = services.BuildServiceProvider();
 
-// ═══════════════════════════════════════════════════════════
-// Uygulama Başlatma
-// ═══════════════════════════════════════════════════════════
-// ChatOrchestrator'ı DI'dan resolve ediyoruz.
-// Container otomatik olarak:
-//   1. Kernel oluşturur (+ OpenAI bağlantısı + Plugin'ler + Filter)
-//   2. ChatOrchestrator(Kernel) constructor'ına Kernel'ı inject eder
 var orchestrator = serviceProvider.GetRequiredService<ChatOrchestrator>();
 await orchestrator.RunAsync();

@@ -5,9 +5,6 @@ using ECommerceAgent.Domain.Interfaces;
 
 namespace ECommerceAgent.Application.Services;
 
-/// 1. Her metot string döner — çünkü bu string doğrudan LLM'e gider.
-///    LLM bu mesajı okuyup kullanıcıya doğal dilde aktarır.
-
 public class CartService : ICartService
 {
     private readonly ICartRepository _cartRepository;
@@ -23,42 +20,41 @@ public class CartService : ICartService
     {
         var product = _productRepository.GetById(productId);
         if (product == null)
-            return $"Hata: '{productId}' ID'li ürün bulunamadı. Lütfen önce ürün arayın.";
+            return $"Hata: '{productId}' ID'li urun bulunamadi. Lutfen once urun arayin.";
 
         if (quantity <= 0)
-            return "Hata: Miktar 0'dan büyük olmalıdır.";
+            return "Hata: Miktar 0'dan buyuk olmalidir.";
 
         var currentInCart = _cartRepository.GetItemQuantity(productId);
         var availableStock = product.Stock - currentInCart;
 
         if (availableStock <= 0)
-            return $"Hata: '{product.Name}' stokta kalmadı.";
+            return $"Hata: '{product.Name}' stokta kalmadi.";
 
         var actualQuantity = Math.Min(quantity, availableStock);
         _cartRepository.AddItem(productId, actualQuantity);
 
         var message = new StringBuilder();
-        message.Append($"✅ '{product.Name}' x{actualQuantity} sepete eklendi.");
+        message.Append($"OK: '{product.Name}' x{actualQuantity} sepete eklendi.");
 
         if (actualQuantity < quantity)
-            message.Append($" ⚠️ Stokta yalnızca {availableStock} adet vardı, {actualQuantity} adet eklendi.");
+            message.Append($" Uyari: Stokta yalnizca {availableStock} adet vardi, {actualQuantity} adet eklendi.");
 
-        message.Append($" (Birim fiyat: {product.Price:C})");
+        message.Append($" Birim fiyat: {FormatPrice(product.Price)}.");
 
         return message.ToString();
     }
 
     public string RemoveFromCart(string productId)
     {
-        // Ürün bilgisini al (mesajda adını göstermek için)
         var product = _productRepository.GetById(productId);
         var productName = product?.Name ?? productId;
 
         var removed = _cartRepository.RemoveItem(productId);
         if (!removed)
-            return $"Hata: '{productName}' sepetinizde bulunamadı.";
+            return $"Hata: '{productName}' sepetinizde bulunamadi.";
 
-        return $"✅ '{productName}' sepetten çıkarıldı.";
+        return $"OK: '{productName}' sepetten cikarildi.";
     }
 
     public string GetCart()
@@ -66,9 +62,8 @@ public class CartService : ICartService
         var items = _cartRepository.GetAllItems().ToList();
 
         if (!items.Any())
-            return "Sepetiniz boş.";
+            return "Sepetiniz bos.";
 
-        // JSON formatında dön — LLM yapılandırılmış veriyi daha iyi okur
         var cartSummary = new
         {
             Items = items.Select(i => new
@@ -76,10 +71,10 @@ public class CartService : ICartService
                 i.ProductId,
                 i.ProductName,
                 i.Quantity,
-                UnitPrice = $"{i.UnitPrice:F2} TL",
-                TotalPrice = $"{i.TotalPrice:F2} TL"
+                UnitPrice = FormatPrice(i.UnitPrice),
+                TotalPrice = FormatPrice(i.TotalPrice)
             }),
-            TotalAmount = $"{items.Sum(i => i.TotalPrice):F2} TL",
+            TotalAmount = FormatPrice(items.Sum(i => i.TotalPrice)),
             ItemCount = items.Count
         };
 
@@ -88,5 +83,10 @@ public class CartService : ICartService
             WriteIndented = true,
             Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         });
+    }
+
+    private static string FormatPrice(decimal price)
+    {
+        return $"{price:F2} TL";
     }
 }
